@@ -11,8 +11,11 @@ cv::Mat loadFirstFrame(const std::string& path);
 void applyProcessor(const cv::Mat& in, cv::Mat& out, const ocio::ConstProcessorRcPtr& processor);
 void show(const std::string& name, const cv::Mat& img, uint32_t height);
 void applyLUT(const cv::Mat& in, cv::Mat& out, const std::string& lutPath);
+cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius);
+void denoise(const cv::Mat& in, cv::Mat& out, bool blur);
 cv::Mat rec709toLinear(const cv::Mat& in);
 cv::Mat linearToRec709(const cv::Mat& img);
 cv::Mat addGrain(const cv::Mat& in);
+void save(const std::string& filepath, const cv::Mat& img);
 
 #endif  // FILM_EMULATION_CPP_IMGIO_H

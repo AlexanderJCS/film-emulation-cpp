@@ -4,6 +4,7 @@ cmake-build-release
 *.cube
 *.mov
 .idea
+out/
 
 # Prerequisites
 *.d

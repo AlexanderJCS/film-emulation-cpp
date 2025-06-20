@@ -50,7 +50,7 @@ void show(const std::string& name, const cv::Mat& img, uint32_t height) {
     cv::resize(img, resized, cv::Size(), scale, scale);
     cv::imshow(name, resized);
     cv::waitKey(0);
-    if (cv::getWindowProperty(name, cv::WND_PROP_VISIBLE) >= 0) {
+    if (cv::getWindowProperty(name, cv::WND_PROP_VISIBLE) >= 1) {
         cv::destroyWindow(name);
     }
 }
@@ -63,6 +63,113 @@ void applyLUT(const cv::Mat& in, cv::Mat& out, const std::string& lutPath) {
 
     auto processor = config->getProcessor(ft);
     applyProcessor(in, out, processor);
+}
+
+cv::Mat exponentialBlur(const cv::Mat& img, float sigma, int kernel_radius = -1) {
+    CV_Assert(sigma > 0);
+    // Determine radius
+    if (kernel_radius < 0) {
+        kernel_radius = static_cast<int>(3 * sigma);
+    }
+    kernel_radius = std::max(1, kernel_radius);
+    int ksize = 2 * kernel_radius + 1;
+
+    // Build exponential kernel (CV_32F)
+    cv::Mat kernel(ksize, ksize, CV_32F);
+    int center = kernel_radius;
+    for (int y = 0; y < ksize; y++) {
+        int dy = y - center;
+        for (int x = 0; x < ksize; x++) {
+            int dx = x - center;
+            float r = std::sqrt(float(dx*dx + dy*dy));
+            kernel.at<float>(y, x) = std::exp(-r / sigma);
+        }
+    }
+    // Normalize
+    kernel /= cv::sum(kernel)[0];
+
+    // Prepare 8-bit image for filtering
+    cv::Mat img8u;
+    if (img.depth() == CV_32F) {
+        // scale [0,1]→[0,255]
+        img.convertTo(img8u, CV_8U, 255.0);
+    } else if (img.depth() == CV_8U) {
+        img8u = img;
+    } else {
+        // convert other depths to float first, then scale
+        cv::Mat tmp;
+        img.convertTo(tmp, CV_32F);
+        tmp.convertTo(img8u, CV_8U, 255.0 / (std::numeric_limits<float>::max()));
+        // Note: if input isn’t [0,1], result may be unexpected.
+    }
+
+    // Apply filter; filter2D handles multi-channel automatically
+    cv::Mat blurred8u;
+    cv::filter2D(img8u, blurred8u, -1, kernel, cv::Point(-1,-1), 0, cv::BORDER_REFLECT);
+
+    // Convert back to float [0,1]
+    cv::Mat out;
+    blurred8u.convertTo(out, CV_32F, 1.0f / 255.0f);
+    return out;
+}
+
+cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius) {
+    // Apply these steps:
+    //  1. Threshold
+    //  2. Create a mask of where you did not threshold
+    //  3. Blur the thresholded image
+    //  4. Mask the blurred image by where you did not threshold
+    //  5. Apply the blurred image back to the original
+
+    cv::Mat thresholded;
+    cv::threshold(in, thresholded, 0.8f, 1.0f, cv::THRESH_TOZERO);
+
+    cv::Mat gray;
+    cv::cvtColor(thresholded, gray, cv::COLOR_BGR2GRAY);
+    gray.convertTo(gray, CV_8U, 255.0f);
+
+    cv::Mat binary;
+    cv::threshold(gray, binary, 10, 255, cv::THRESH_BINARY);
+
+    cv::Mat invBinary;
+    cv::bitwise_not(binary, invBinary);
+
+    cv::Mat blurred = exponentialBlur(thresholded, radius);
+
+    cv::Mat halationOnly;
+    cv::bitwise_and(blurred, blurred, halationOnly, invBinary);
+
+    // Multiply to give halation the redshift
+    cv::Mat tinted;
+    cv::multiply(halationOnly, cv::Scalar(0.02f, 0.1f, 1.0f), tinted);
+
+    cv::Mat result;
+    cv::addWeighted(in, 1.0f, halationOnly, intensity, 0.0f, result);
+
+    return result;
+}
+
+void denoise(const cv::Mat& in, cv::Mat& out, bool blur) {
+    cv::Mat temp;
+    in.convertTo(temp, CV_8UC3, 255.0f);
+
+    std::cout << "denoising\n";
+    cv::fastNlMeansDenoisingColored(
+            temp,
+            temp,
+            4,
+            5,
+            30
+            );
+
+    // Adding a tiny gaussian blur can help make the image appear "soft" since many digital cameras (especially phones)
+    //  have a sharp look.
+    std::cout << "blurring\n";
+    if (blur) {
+        cv::GaussianBlur(temp, temp, cv::Size(0, 0), 0.5, 0.5);
+    }
+
+    temp.convertTo(out, CV_32FC3, 1 / 255.0f);
 }
 
 cv::Mat rec709toLinear(const cv::Mat& img) {
@@ -166,4 +273,13 @@ cv::Mat addGrain(const cv::Mat& in) {
     }
 
     return grain;
+}
+
+void save(const std::string& filepath, const cv::Mat& img) {
+    cv::Mat saveImg;
+    img.convertTo(saveImg, CV_8U, 255.0f);
+    bool ok = cv::imwritemulti(filepath, saveImg);
+    if (!ok) {
+        std::cerr << "WARNING: Could not write to " << filepath << "\n";
+    }
 }
