@@ -16,6 +16,7 @@ void denoise(const cv::Mat& in, cv::Mat& out, bool blur);
 cv::Mat rec709toLinear(const cv::Mat& in);
 cv::Mat linearToRec709(const cv::Mat& img);
 cv::Mat addGrainColor(const cv::Mat& in);
+cv::Mat addGrainMonochrome(const cv::Mat& in);
 void save(const std::string& filepath, const cv::Mat& img);
 
 #endif  // FILM_EMULATION_CPP_IMGIO_H

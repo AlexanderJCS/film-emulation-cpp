@@ -29,7 +29,7 @@ int main() {
 //    show("Linear", linear, 800);
     save("out/linear.png", linear);
 
-    cv::Mat halation = applyHalation(linear, 0.4f, 20.0f);
+    cv::Mat halation = applyHalation(linear, 0.3f, 20.0f);
     save("out/halation.png", halation);
 
     cv::Mat denoised;
@@ -37,11 +37,11 @@ int main() {
 //    show("Denoised", denoised, 800);
     save("out/denoised.png", denoised);
 
-    cv::Mat grainyColor = addGrainColor(denoised);
-//    show("Grainy Color", grainyColor, 800);
-    save("out/grainy.png", grainyColor);
+    cv::Mat grain = addGrainMonochrome(denoised);
+//    show("Grain", grain, 800);
+    save("out/grainy.png", grain);
 
-    cv::Mat result = linearToRec709(grainyColor);
+    cv::Mat result = linearToRec709(grain);
     save("out/result.png", result);
 
     auto tEnd = std::chrono::high_resolution_clock::now();

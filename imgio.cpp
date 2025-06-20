@@ -159,7 +159,7 @@ void denoise(const cv::Mat& in, cv::Mat& out, bool blur) {
             temp,
             4,
             5,
-            30
+            21
             );
 
     // Adding a tiny gaussian blur can help make the image appear "soft" since many digital cameras (especially phones)
@@ -273,6 +273,69 @@ cv::Mat addGrainColor(const cv::Mat& in) {
     }
 
     return grain;
+}
+
+cv::Mat addGrainMonochrome(const cv::Mat& in) {
+    cv::Mat monochrome;
+    cv::cvtColor(in, monochrome, cv::COLOR_BGR2GRAY);
+
+    float muR = 0.11;
+    float sigmaR = 0.005;
+    float s = 1.0;
+    float sigmaFilter = 0.8;
+    unsigned int NmonteCarlo = 350;
+    float xA = 0;
+    float yA = 0;
+    auto xB = static_cast<float>(monochrome.cols);
+    auto yB = static_cast<float>(monochrome.rows);
+    unsigned int mOut = (int) floor(s * (yB-yA));
+    unsigned int nOut = (int) floor(s * (xB-xA));
+
+    filmGrainOptionsStruct<float> options{
+            .muR = muR,
+            .sigmaR = sigmaR,
+            .sigmaFilter = sigmaFilter,
+            .NmonteCarlo = NmonteCarlo,
+            .algorithmID = 0,
+            .s = s,
+            .xA = xA,
+            .yA = yA,
+            .xB = xB,
+            .yB = yB,
+            .mOut = mOut,
+            .nOut = nOut,
+            .grainSeed = 0
+    };
+
+    // Process each channel separately
+    auto *imgIn = new matrix<float>();
+    imgIn->allocate_memory((int) monochrome.rows, (int) monochrome.cols);
+
+    for (unsigned int i = 0; i < (unsigned int) monochrome.rows; i++) {
+        for (unsigned int j = 0; j < (unsigned int) monochrome.cols; j++) {
+            const auto& pixel = monochrome.at<float>((int) i, (int) j);
+            imgIn->set_value((int) i, (int) j, pixel);
+        }
+    }
+
+    options.grainSeed = static_cast<unsigned int>(std::time(nullptr));
+
+    matrix<float>* imgOutTemp = film_grain_rendering_pixel_wise(imgIn, options);
+
+    cv::Mat grain(imgOutTemp->get_nrows(), imgOutTemp->get_ncols(), CV_32FC1, imgOutTemp->get_ptr());
+
+    cv::Mat difference = grain - monochrome;
+    cv::Mat difference3;
+    cv::cvtColor(difference, difference3, cv::COLOR_GRAY2BGR);
+
+    cv::Mat output;
+    cv::addWeighted(in, 1.0f, difference3, 0.75f, 0.0f, output);
+
+    delete imgOutTemp;  // TODO: should I delete imgIn?
+
+    output = cv::max(cv::min(output, 1.0f), 0.0f);  // Clamp [0, 1]
+
+    return output;
 }
 
 void save(const std::string& filepath, const cv::Mat& img) {
