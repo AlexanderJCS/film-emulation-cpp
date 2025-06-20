@@ -1,3 +1,9 @@
+vcpkg
+cmake-build-debug
+cmake-build-release
+*.cube
+*.mov
+
 # Prerequisites
 *.d
 
