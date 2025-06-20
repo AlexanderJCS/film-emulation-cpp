@@ -1,4 +1,6 @@
+#ifdef USE_OMP
 #include <omp.h>
+#endif
 
 #include "pseudo_random_number_generator.h"
 #include "film_grain_rendering.h"

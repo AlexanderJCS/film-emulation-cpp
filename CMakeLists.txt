@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 find_package(OpenCV REQUIRED)
 find_package(OpenColorIO REQUIRED)
 
-find_package(OpenMP REQUIRED)
+find_package(OpenMP)
 
 add_executable(film_emulation_cpp main.cpp
         imgio.cpp
@@ -24,8 +24,11 @@ add_executable(film_emulation_cpp main.cpp
 )
 
 if(OpenMP_CXX_FOUND)
+    target_compile_definitions(film_emulation_cpp PRIVATE USE_OPENMP)
     target_compile_options(film_emulation_cpp PRIVATE ${OpenMP_CXX_FLAGS})
     target_link_libraries(film_emulation_cpp PRIVATE ${OpenMP_CXX_LIBRARIES})
+else()
+    message("Could not find OMP")
 endif()
 
 
