@@ -15,7 +15,7 @@ int main() {
 
     auto tStart = std::chrono::high_resolution_clock::now();
 
-    cv::Mat img = loadFirstFrame("hammock_landscape.mov");
+    cv::Mat img = loadFirstFrame("./in/IMG_2525.MOV");
 //    show("Frame", img, 800);
     save("out/original.png", img);
 

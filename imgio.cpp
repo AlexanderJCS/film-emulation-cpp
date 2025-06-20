@@ -122,7 +122,7 @@ cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius) {
     //  5. Apply the blurred image back to the original
 
     cv::Mat thresholded;
-    cv::threshold(in, thresholded, 0.8f, 1.0f, cv::THRESH_TOZERO);
+    cv::threshold(in, thresholded, 0.7f, 1.0f, cv::THRESH_TOZERO);
 
     cv::Mat gray;
     cv::cvtColor(thresholded, gray, cv::COLOR_BGR2GRAY);
@@ -136,12 +136,15 @@ cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius) {
 
     cv::Mat blurred = exponentialBlur(thresholded, radius);
 
-    cv::Mat halationOnly;
-    cv::bitwise_and(blurred, blurred, halationOnly, invBinary);
+    // Applying halation only on the edges works sometimes but other times can leave some nasty-looking artifacts near
+    //  the edges. I should add this back if I notice that lights are unnaturally bright. If I do add this back, I
+    //  should add a "soft mask" instead of a binary thing
+    // cv::Mat halationOnly;
+    // cv::bitwise_and(blurred, blurred, halationOnly, invBinary);
 
     // Multiply to give halation the redshift
     cv::Mat tinted;
-    cv::multiply(halationOnly, cv::Scalar(0.02f, 0.05f, 1.0f), tinted);
+    cv::multiply(blurred, cv::Scalar(0.02f, 0.05f, 1.0f), tinted);
 
     cv::Mat result;
     cv::addWeighted(in, 1.0f, tinted, intensity, 0.0f, result);

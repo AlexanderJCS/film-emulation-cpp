@@ -1,3 +1,4 @@
+in/
 vcpkg
 cmake-build-debug
 cmake-build-release
