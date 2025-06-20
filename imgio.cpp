@@ -141,10 +141,10 @@ cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius) {
 
     // Multiply to give halation the redshift
     cv::Mat tinted;
-    cv::multiply(halationOnly, cv::Scalar(0.02f, 0.1f, 1.0f), tinted);
+    cv::multiply(halationOnly, cv::Scalar(0.02f, 0.05f, 1.0f), tinted);
 
     cv::Mat result;
-    cv::addWeighted(in, 1.0f, halationOnly, intensity, 0.0f, result);
+    cv::addWeighted(in, 1.0f, tinted, intensity, 0.0f, result);
 
     return result;
 }
@@ -212,9 +212,9 @@ cv::Mat linearToRec709(const cv::Mat& img) {
     return rec709;
 }
 
-cv::Mat addGrain(const cv::Mat& in) {
-    float muR = 0.05;
-    float sigmaR = 0.01;
+cv::Mat addGrainColor(const cv::Mat& in) {
+    float muR = 0.08;
+    float sigmaR = 0.005;
     float s = 1.0;
     float sigmaFilter = 0.8;
     unsigned int NmonteCarlo = 175;
