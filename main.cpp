@@ -49,26 +49,25 @@ int main() {
         cv::Mat lut;
         applyLUT(img, lut, lutPath);
         //    show("LUT applied", lut, 800);
-        save("out/" + filename + "_2_lut.png", lut);
+        save("out/" + filename + "_2_lut_rec709.png", lut);
 
         cv::Mat linear = rec709toLinear(lut);
         //    show("Linear", linear, 800);
         save("out/" + filename + "_3_linear.png", linear);
 
         cv::Mat halation = applyHalation(linear, 0.3f, 20.0f);
-        save("out/" + filename + "_4_halation.png", halation);
+        save("out/" + filename + "_4_halation_rec709.png", linearToRec709(halation));
 
-        cv::Mat denoised;
-        denoise(halation, denoised, true);
+        cv::Mat denoised = denoise(halation);
         //    show("Denoised", denoised, 800);
-        save("out/" + filename + "_5_denoised.png", denoised);
+        save("out/" + filename + "_5_denoised_rec709.png", linearToRec709(denoised));
 
         cv::Mat grain = addGrainMonochrome(denoised);
         //    show("Grain", grain, 800);
-        save("out/" + filename + "_6_grainy.png", grain);
+        save("out/" + filename + "_6_grainy_linear.png", grain);
 
         cv::Mat result = linearToRec709(grain);
-        save("out/_" + filename + "_7_result.png", result);
+        save("out/_" + filename + "_7_result_rec709.png", result);
 
         auto tEnd = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = tEnd - tStart;

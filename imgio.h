@@ -12,7 +12,7 @@ void applyProcessor(const cv::Mat& in, cv::Mat& out, const ocio::ConstProcessorR
 void show(const std::string& name, const cv::Mat& img, uint32_t height);
 void applyLUT(const cv::Mat& in, cv::Mat& out, const std::string& lutPath);
 cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius);
-void denoise(const cv::Mat& in, cv::Mat& out, bool blur);
+cv::Mat denoise(const cv::Mat& in);
 cv::Mat rec709toLinear(const cv::Mat& in);
 cv::Mat linearToRec709(const cv::Mat& img);
 cv::Mat addGrainColor(const cv::Mat& in);

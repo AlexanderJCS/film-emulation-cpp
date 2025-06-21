@@ -1,6 +1,8 @@
 #include "imgio.h"
 
 #include "grain_newson_et_al/film_grain_rendering.h"
+#include <opencv2/xphoto.hpp>
+
 
 cv::Mat loadFirstFrame(const std::string& path) {
     cv::VideoCapture cap{path};
@@ -152,24 +154,24 @@ cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius) {
     return result;
 }
 
-void denoise(const cv::Mat& in, cv::Mat& out, bool blur) {
-    cv::Mat temp;
-    in.convertTo(temp, CV_8UC3, 255.0f);
+cv::Mat denoise(const cv::Mat& in) {
+    /*
+     * This denoising process converts the image from linear to rec709 - then back to linear when complete. At first
+     * this doesn't make sense since digital noise is in linear space. The reason I do this anyway is because, under the
+     * hood, dctDenoising converts the image to the uint8 format. If the image is kept in linear color space, deep
+     * shadows get compressed to the point of having an extreme color banding effect when it is converted back to rec709.
+     * The colors may also be off in some images. Denoising in rec709 fixes this issue.
+     */
+    cv::Mat rec = linearToRec709(in);
+    cv::Mat rec255;
+    rec.convertTo(rec255, CV_8U, 255.0f);  // having some segfault problems so converting explicitly can't hurt
 
-    cv::fastNlMeansDenoising(
-            temp,
-            temp,
-            3
-            );
+    cv::Mat denoised255;
+    cv::xphoto::dctDenoising(rec255, denoised255, 7.5, 8);
 
-    // Adding a tiny gaussian blur can help make the image appear "soft" since many digital cameras (especially phones)
-    //  have a sharp look.
-    std::cout << "blurring\n";
-    if (blur) {
-        cv::GaussianBlur(temp, temp, cv::Size(0, 0), 0.5, 0.5);
-    }
-
-    temp.convertTo(out, CV_32FC3, 1 / 255.0f);
+    cv::Mat out;
+    denoised255.convertTo(out, CV_32FC3, 1.0f / 255.0f);
+    return rec709toLinear(out);
 }
 
 cv::Mat rec709toLinear(const cv::Mat& img) {
@@ -324,12 +326,13 @@ cv::Mat addGrainMonochrome(const cv::Mat& in) {
 
     cv::Mat grain(imgOutTemp->get_nrows(), imgOutTemp->get_ncols(), CV_32FC1, imgOutTemp->get_ptr());
 
-    cv::Mat difference = grain - monochrome;
+    cv::Mat difference;
+    cv::subtract(grain, monochrome, difference, cv::noArray(), CV_32FC1);
     cv::Mat difference3;
     cv::cvtColor(difference, difference3, cv::COLOR_GRAY2BGR);
 
     cv::Mat output;
-    cv::addWeighted(in, 1.0f, difference3, 0.75f, 0.0f, output);
+    cv::addWeighted(in, 1.0f, difference3, 0.75f, 0.0f, output, CV_32FC3);
 
     delete imgOutTemp;  // TODO: should I delete imgIn?
 
