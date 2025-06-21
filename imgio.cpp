@@ -156,7 +156,6 @@ void denoise(const cv::Mat& in, cv::Mat& out, bool blur) {
     cv::Mat temp;
     in.convertTo(temp, CV_8UC3, 255.0f);
 
-    std::cout << "denoising\n";
     cv::fastNlMeansDenoisingColored(
             temp,
             temp,

@@ -261,8 +261,8 @@ matrix<float>* film_grain_rendering_pixel_wise(matrix<float> *imgIn,
     float grainStd = filmGrainOptions.sigmaR;
     float sigmaFilter = filmGrainOptions.sigmaFilter;
 
-    std::cout << "min : " << imgIn->min() << std::endl;
-    std::cout << "max : " << imgIn->max() << std::endl;
+    // std::cout << "min : " << imgIn->min() << std::endl;
+    // std::cout << "max : " << imgIn->max() << std::endl;
 
     /*********************************************/
     /***MONTE CARLO TRANSLATION VECTORS*****/
@@ -298,8 +298,8 @@ matrix<float>* film_grain_rendering_pixel_wise(matrix<float> *imgIn,
     //create list of temporary images, and set them to 0
     matrix<float> *imgOut = new matrix<float>( filmGrainOptions.mOut,
                                                filmGrainOptions.nOut);
-    std::cout<< "image output size : " << imgOut->get_ncols();
-    std::cout << " x " << imgOut->get_nrows() << std::endl;
+    // std::cout<< "image output size : " << imgOut->get_ncols();
+    // std::cout << " x " << imgOut->get_nrows() << std::endl;
 
     int i,j;
     float *pt,pix;
@@ -412,11 +412,11 @@ matrix<float>* film_grain_rendering_grain_wise(matrix<float> *imgIn,
             /((float)(filmGrainOptions.xB-filmGrainOptions.xA));
     float sY = ((float)filmGrainOptions.mOut)
             /((float)(filmGrainOptions.yB-filmGrainOptions.yA));
-    std::cout<< "sX : " << sX << std::endl;
-    std::cout<< "sY : " << sY << std::endl;
-
-    std::cout << "min : " << imgIn->min() << std::endl;
-    std::cout << "max : " << imgIn->max() << std::endl;
+    // std::cout<< "sX : " << sX << std::endl;
+    // std::cout<< "sY : " << sY << std::endl;
+    //
+    // std::cout << "min : " << imgIn->min() << std::endl;
+    // std::cout << "max : " << imgIn->max() << std::endl;
 
     /*********************************************/
     /***MONTE CARLO TRANSLATION VECTORS*****/
