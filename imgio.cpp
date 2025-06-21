@@ -156,12 +156,10 @@ void denoise(const cv::Mat& in, cv::Mat& out, bool blur) {
     cv::Mat temp;
     in.convertTo(temp, CV_8UC3, 255.0f);
 
-    cv::fastNlMeansDenoisingColored(
+    cv::fastNlMeansDenoising(
             temp,
             temp,
-            4,
-            5,
-            21
+            3
             );
 
     // Adding a tiny gaussian blur can help make the image appear "soft" since many digital cameras (especially phones)
