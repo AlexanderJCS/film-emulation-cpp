@@ -287,7 +287,7 @@ cv::Mat addGrainMonochrome(const cv::Mat& in) {
     float sigmaR = 0.075f * muR;
     float s = 1.0;
     float sigmaFilter = 0.875;
-    unsigned int NmonteCarlo = 375;
+    unsigned int NmonteCarlo = 350;
     float xA = 0;
     float yA = 0;
     auto xB = static_cast<float>(monochrome.cols);
