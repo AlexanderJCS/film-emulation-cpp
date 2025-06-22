@@ -334,18 +334,18 @@ cv::Mat addGrainMonochrome(const cv::Mat& in) {
     cv::cvtColor(difference, difference3, cv::COLOR_GRAY2BGR);
 
     // Reduce grain in shadows
-    cv::Mat grainWeight;
-    cv::pow(1 - (cv::min(monochrome + 0.17f, 1.0f)), 4.0f, grainWeight);
-    grainWeight = 1 - grainWeight;
-
-    cv::Mat grainWeight3;
-    cv::cvtColor(grainWeight, grainWeight3, cv::COLOR_GRAY2BGR);
-
-    cv::Mat weightedGrain;
-    cv::multiply(difference3, grainWeight3, weightedGrain);  // result is CV_32FC3
+    // cv::Mat grainWeight;
+    // cv::pow(1 - (cv::min(monochrome + 0.225f, 1.0f)), 4.0f, grainWeight);
+    // grainWeight = 1 - grainWeight;
+    //
+    // cv::Mat grainWeight3;
+    // cv::cvtColor(grainWeight, grainWeight3, cv::COLOR_GRAY2BGR);
+    //
+    // cv::Mat weightedGrain;
+    // cv::multiply(difference3, grainWeight3, weightedGrain);  // result is CV_32FC3
 
     cv::Mat output;
-    cv::addWeighted(rec709, 1.0f, weightedGrain, 0.7f, 0.0f, output, CV_32FC3);
+    cv::addWeighted(rec709, 1.0f, difference3, 0.525f, 0.0f, output, CV_32FC3);
     delete imgOutTemp;  // TODO: should I delete imgIn?
 
     output = cv::max(cv::min(output, 1.0f), 0.0f);  // Clamp [0, 1]
