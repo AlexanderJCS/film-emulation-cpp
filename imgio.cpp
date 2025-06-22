@@ -278,14 +278,16 @@ cv::Mat addGrainColor(const cv::Mat& in) {
 }
 
 cv::Mat addGrainMonochrome(const cv::Mat& in) {
-    cv::Mat monochrome;
-    cv::cvtColor(in, monochrome, cv::COLOR_BGR2GRAY);
+    cv::Mat rec709 = linearToRec709(in);
 
-    float muR = 0.11;
-    float sigmaR = 0.005;
+    cv::Mat monochrome;
+    cv::cvtColor(rec709, monochrome, cv::COLOR_BGR2GRAY);
+
+    float muR = 0.14;
+    float sigmaR = 0.075f * muR;
     float s = 1.0;
-    float sigmaFilter = 0.90;
-    unsigned int NmonteCarlo = 350;
+    float sigmaFilter = 0.875;
+    unsigned int NmonteCarlo = 375;
     float xA = 0;
     float yA = 0;
     auto xB = static_cast<float>(monochrome.cols);
@@ -332,10 +334,9 @@ cv::Mat addGrainMonochrome(const cv::Mat& in) {
     cv::cvtColor(difference, difference3, cv::COLOR_GRAY2BGR);
 
     // Reduce grain in shadows
-    const float n = 0.5;
     cv::Mat grainWeight;
-    cv::pow(monochrome, 1.0f / 3.0f, grainWeight);
-    grainWeight = grainWeight * n - (1 - n);
+    cv::pow(1 - (cv::min(monochrome + 0.17f, 1.0f)), 4.0f, grainWeight);
+    grainWeight = 1 - grainWeight;
 
     cv::Mat grainWeight3;
     cv::cvtColor(grainWeight, grainWeight3, cv::COLOR_GRAY2BGR);
@@ -344,12 +345,12 @@ cv::Mat addGrainMonochrome(const cv::Mat& in) {
     cv::multiply(difference3, grainWeight3, weightedGrain);  // result is CV_32FC3
 
     cv::Mat output;
-    cv::addWeighted(in, 1.0f, weightedGrain, 1.0f, 0.0f, output);  // output is CV_32FC3
+    cv::addWeighted(rec709, 1.0f, weightedGrain, 0.7f, 0.0f, output, CV_32FC3);
     delete imgOutTemp;  // TODO: should I delete imgIn?
 
     output = cv::max(cv::min(output, 1.0f), 0.0f);  // Clamp [0, 1]
 
-    return output;
+    return rec709toLinear(output);
 }
 
 void save(const std::string& filepath, const cv::Mat& img) {
