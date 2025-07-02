@@ -116,27 +116,15 @@ cv::Mat exponentialBlur(const cv::Mat& img, float sigma, int kernel_radius = -1)
 }
 
 cv::Mat applyHalation(const cv::Mat& in, float intensity, float radius) {
-    // Apply these steps:
-    //  1. Threshold
-    //  2. Create a mask of where you did not threshold
-    //  3. Blur the thresholded image
-    //  4. Mask the blurred image by where you did not threshold
-    //  5. Apply the blurred image back to the original
+    constexpr float low = 0.60f;
+    constexpr float high = 0.70f;
+    cv::Mat mask = in.clone();
+    mask = (mask - cv::Scalar(low, low, low)) / (high - low);
 
-    cv::Mat thresholded;
-    cv::threshold(in, thresholded, 0.7f, 1.0f, cv::THRESH_TOZERO);
+    cv::threshold(mask, mask, 0.0f, 0.0f, cv::THRESH_TOZERO);
+    cv::threshold(mask, mask, 1.0f, 1.0f, cv::THRESH_TRUNC);
 
-    cv::Mat gray;
-    cv::cvtColor(thresholded, gray, cv::COLOR_BGR2GRAY);
-    gray.convertTo(gray, CV_8U, 255.0f);
-
-    cv::Mat binary;
-    cv::threshold(gray, binary, 10, 255, cv::THRESH_BINARY);
-
-    cv::Mat invBinary;
-    cv::bitwise_not(binary, invBinary);
-
-    cv::Mat blurred = exponentialBlur(thresholded, radius);
+    cv::Mat blurred = exponentialBlur(mask, radius);
 
     // Applying halation only on the edges works sometimes but other times can leave some nasty-looking artifacts near
     //  the edges. I should add this back if I notice that lights are unnaturally bright. If I do add this back, I
